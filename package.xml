@@ -11,7 +11,7 @@
   <license>BSD</license>
 
 
-  <url type="repository">https://github.com/Jolan-Van-Passel/RCM-positioning.git>
+  <url type="repository">https://github.com/Jolan-Van-Passel/RCM-positioning.git</url>
 
 
   <buildtool_depend>catkin</buildtool_depend>
