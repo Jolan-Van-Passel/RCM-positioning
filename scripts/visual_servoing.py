@@ -2,6 +2,7 @@ import numpy as np
 import math as m
 from image_operations import *
 from geometry_msgs.msg import Vector3
+import rospy
 
 def getInteractionMatrix_4dots(image):
     # angle of the cone
@@ -31,22 +32,25 @@ def getError_4dots(image):
     c = getCoordinates(image)
 
     # convert image coordinates to model coordinates
-    goal = [g[0][0]-200, 200-g[0][1]]
-    coordinates = [[c[0][0]-200, 200-c[0][1]],
+    if g.shape[0] > 0 and g.shape[1] > 0:
+        goal = [g[0][0]-200, 200-g[0][1]]
+        coordinates = [[c[0][0]-200, 200-c[0][1]],
                    [c[1][0]-200, 200-c[1][1]],
                    [c[2][0]-200, 200-c[2][1]],
                    [c[3][0]-200, 200-c[3][1]]]
     
-    # error is difference between goal and coordinates
-    e = np.asarray(
-        [goal[0]-coordinates[0][0],
-         goal[1]-coordinates[0][1],
-         goal[0]-coordinates[1][0],
-         goal[1]-coordinates[1][1],
-         goal[0]-coordinates[2][0],
-         goal[1]-coordinates[2][1],
-         goal[0]-coordinates[3][0],
-         goal[1]-coordinates[3][1]])
+        # error is difference between goal and coordinates
+        e = np.asarray(
+            [goal[0]-coordinates[0][0],
+            goal[1]-coordinates[0][1],
+            goal[0]-coordinates[1][0],
+            goal[1]-coordinates[1][1],
+            goal[0]-coordinates[2][0],
+            goal[1]-coordinates[2][1],
+            goal[0]-coordinates[3][0],
+            goal[1]-coordinates[3][1]])
+    else:
+        e=0
     return e
 
 def getCameraVelocity_4dots(image):
@@ -56,22 +60,28 @@ def getCameraVelocity_4dots(image):
     e = getError_4dots(image)
     
     # factor to multiply speed in [1/s]
-    K = 1
-        
-    # desired pixel speed of points
-    u_d = K*e
+    K = 0.1
+    
+    v = Vector3
+    try:
+        if e == 0:
+            v.x = 0
+            v.y = 0
+            v.z = 0
+    except:
+        # desired pixel speed of points
+        u_d = K*e
 
-    # Moore-Penrose pseudo-inverse interaction matrix
-    L_inv = np.linalg.pinv(L)
+        # Moore-Penrose pseudo-inverse interaction matrix
+        L_inv = np.linalg.pinv(L)
 
-    # camera speed is dot product of inverse L and desired pxl speed
-    v_prime = np.dot(L_inv, u_d)
+        # camera speed is dot product of inverse L and desired pxl speed
+        v_prime = np.dot(L_inv, u_d)
 
-    # adaption for different coordinate system
-    v = Vector3()
-    v.x = v_prime[0]
-    v.y = v_prime[1] * m.cos(theta) - v_prime[2] * m.sin(theta)
-    v.z = v_prime[1] * m.sin(theta) + v_prime[2] * m.cos(theta)
+        # adaption for different coordinate system
+        v.x = v_prime[0]
+        v.y = v_prime[1] * m.cos(theta) - v_prime[2] * m.sin(theta)
+        v.z = v_prime[1] * m.sin(theta) + v_prime[2] * m.cos(theta)
     return v
 
 def getInteractionMatrix_1dot(image):
@@ -92,19 +102,24 @@ def getInteractionMatrix_1dot(image):
 
 def getError_1dot(image):
     g = getGoalCoordinates(image)
+    #rospy.loginfo(g)
     c = getCoordinates(image)
-    goal_A = 65 # 65 for model, 467 for irl atm
+    goal_A = 467 # 65 for model, 467 for irl atm
     area = getComponentArea(image)
 
     # convert image coordinates to model coordinates
-    goal = [g[0][0]-200, 200-g[0][1]]
-    coordinates = [[c[0][0]-200, 200-c[0][1]]]
-    
-    # error is difference between goal and coordinates
-    e = np.asarray(
-        [goal[0]-coordinates[0][0],
-         goal[1]-coordinates[0][1],
-         goal_A-area])
+    if g.shape[0] > 0 and g.shape[1] > 0 and c.shape[0] > 0 and c.shape[1] > 0:
+        goal = [g[0][0]-200, 200-g[0][1]]
+        coordinates = [[c[0][0]-200, 200-c[0][1]]]
+        
+        # error is difference between goal and coordinates
+        e = np.asarray(
+            [goal[0]-coordinates[0][0],
+            goal[1]-coordinates[0][1],
+            goal_A-area])
+        #rospy.loginfo(e)
+    else:
+        e=0
     return e
 
 def getCameraVelocity_1dot(image):
@@ -115,19 +130,25 @@ def getCameraVelocity_1dot(image):
     
     # factor to multiply speed in [1/s]
     K = 1
-        
-    # desired pixel speed of points
-    u_d = K*e
 
-    # Moore-Penrose pseudo-inverse interaction matrix
-    L_inv = np.linalg.pinv(L)
+    v = Vector3 
+    try:
+        if e == 0:
+            v.x = 0
+            v.y = 0
+            v.z = 0
+    except:
+        # desired pixel speed of points
+        u_d = K*e
 
-    # camera speed is dot product of inverse L and desired pxl speed
-    v_prime = np.dot(L_inv, u_d)
+        # Moore-Penrose pseudo-inverse interaction matrix
+        L_inv = np.linalg.pinv(L)
 
-    # adaption for different coordinate system
-    v = Vector3()
-    v.x = v_prime[0]
-    v.y = v_prime[1] * m.cos(theta) - v_prime[2] * m.sin(theta)
-    v.z = v_prime[1] * m.sin(theta) + v_prime[2] * m.cos(theta)
+        # camera speed is dot product of inverse L and desired pxl speed
+        v_prime = np.dot(L_inv, u_d)
+
+        # adaption for different coordinate system
+        v.x = v_prime[0]
+        v.y = v_prime[1] * m.cos(theta) - v_prime[2] * m.sin(theta)
+        v.z = v_prime[1] * m.sin(theta) + v_prime[2] * m.cos(theta)
     return v

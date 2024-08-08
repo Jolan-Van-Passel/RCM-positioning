@@ -165,7 +165,7 @@ def getGoalCoordinates(image):
     hsv = cv.cvtColor(image, cv.COLOR_BGR2HSV)
 
     # define range of green color in HSV
-    lower = np.array([36,25,25])
+    lower = np.array([45,50,50])
     upper = np.array([70,255,255])
 
     # Threshold the HSV image to get only red colors
