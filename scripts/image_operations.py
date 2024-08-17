@@ -6,8 +6,8 @@ import math as m
 
 def undistort(image):
     # initialize camera matrix [3x3] and distortion coefficients [1x5]
-    mtx = np.array([[211.7015, 0, 184.2331],[0, 207.7593, 204.1617],[0, 0, 1]])
-    dist = np.array([-0.0403, -0.1640, -0.0008, -0.0015, 0.1150])
+    mtx = np.array([[277, 0, 179],[0, 276, 202],[0, 0, 1]])
+    dist = np.array([-0.08, -0.3, -0.006, -0.003, 0.2])
 
     # optimize camera matrix
     h, w = image.shape[:2]
@@ -26,7 +26,7 @@ def getBinaryImage(image):
 
     # define range of red color in HSV
     lower_red1 = np.array([0,1,140])
-    upper_red1 = np.array([15,255,255])
+    upper_red1 = np.array([30,255,255])
     lower_red2 = np.array([170,1,140])
     upper_red2 = np.array([180,255,255])
 
@@ -37,7 +37,7 @@ def getBinaryImage(image):
     mask = mask1 + mask2
 
     # Average mask and threshold again to get rid of single stray pixels
-    avg = cv.blur(mask, (4,4))
+    avg = cv.blur(mask, (2,2))
     ret,avgmask = cv.threshold(avg,127,255,cv.THRESH_BINARY)
 
     return avgmask
@@ -144,7 +144,7 @@ def getAvgPxlDistanceToCenter(image):
     
 # get a numerical estimation for the distance from the the different dots    
 def getDistance(image):
-    d0 = 50          # focal distance of laser beams
+    d0 = 100.44          # focal distance of laser beams
     alpha = 10.2        # angle of lasers in degrees
     alpha_rad = alpha * m.pi / 180
     d_est = d0          # start the estimation at the focal point (where px_calc is 0)
@@ -161,12 +161,13 @@ def getDistance(image):
 
 # get the goal coordinates, color set to green for now
 def getGoalCoordinates(image):
+    
     # Convert BGR to HSV
     hsv = cv.cvtColor(image, cv.COLOR_BGR2HSV)
 
     # define range of green color in HSV
-    lower = np.array([45,50,50])
-    upper = np.array([70,255,255])
+    lower = np.array([40,90,90])
+    upper = np.array([60,255,255])
 
     # Threshold the HSV image to get only red colors
     mask = cv.inRange(hsv, lower, upper)

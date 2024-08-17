@@ -26,14 +26,20 @@ if __name__ == '__main__':
 
     while not rospy.is_shutdown():
         ret, frame = cap.read()
+
+        # mask out top half of frame
+        mask = np.zeros_like(frame)
+        mask[:,:] = [255,255,255]
+        mask = cv.rectangle(mask,(0,0),(400,200),(0,0,0),-1)
+        frame = cv.bitwise_and(frame,mask)
+
         coordinates = getCoordinates(frame)
 
         if len(coordinates) == 4:
             v = getCameraVelocity_4dots(frame)
         else:
-            rospy.logdebug("test1")
             try:
-                if -1 <= int(getError_1dot(frame)[0]) <= 1 and -1 <= int(getError_1dot(frame)[1]) <= 1 and -10 <= int(getError_1dot(frame)[2]) <= 10:
+                if -1 <= int(getError_1dot(frame)[0]) <= 1 and -1 <= int(getError_1dot(frame)[1]) <= 1 and -5 <= int(getError_1dot(frame)[2]) <= 5:
                     goalReached = True
             except:
                 rospy.loginfo("goal not found")
@@ -59,8 +65,8 @@ if __name__ == '__main__':
         else:
             rospy.loginfo(str(v.x) + "\n" + str(v.y) + "\n" + str(v.z))
             pub.publish(v)
-            image = cv.cvtColor(frame, cv.COLOR_RGB2BGR)
-            image_message = bridge.cv2_to_imgmsg(frame, encoding="bgr8")
+            undist_image = undistort(frame)
+            image_message = bridge.cv2_to_imgmsg(undist_image, encoding="bgr8")
             pub2.publish(image_message)
         rate.sleep()
     

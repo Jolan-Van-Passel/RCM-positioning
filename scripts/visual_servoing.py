@@ -55,6 +55,7 @@ def getError_4dots(image):
 
 def getCameraVelocity_4dots(image):
     theta = 0       # downwards angle between z axis of base and z_prime axis of camera
+    r_theta = theta*m.pi/180
     
     L = getInteractionMatrix_4dots(image)
     e = getError_4dots(image)
@@ -80,12 +81,27 @@ def getCameraVelocity_4dots(image):
 
         # adaption for different coordinate system
         v.x = v_prime[0]
-        v.y = v_prime[1] * m.cos(theta) - v_prime[2] * m.sin(theta)
-        v.z = v_prime[1] * m.sin(theta) + v_prime[2] * m.cos(theta)
+        v.y = v_prime[1] * m.cos(r_theta) - v_prime[2] * m.sin(r_theta)
+        v.z = v_prime[1] * m.sin(r_theta) + v_prime[2] * m.cos(r_theta)
+
+        # speed cap to 1 or -1 depending on direction
+        if v.x > 1:
+            v.x = 1
+        if v.x < -1:
+            v.x = -1
+        if v.y > 1:
+            v.y = 1
+        if v.y < -1:
+            v.y = -1
+        if v.z > 1:
+            v.z = 1
+        if v.z < -1:
+            v.z = -1
+
     return v
 
 def getInteractionMatrix_1dot(image):
-    d0 = 50
+    d0 = 100.44
     
     # get area of points
     A = getComponentArea(image)
@@ -97,14 +113,13 @@ def getInteractionMatrix_1dot(image):
     L = np.asarray(
         [[a,0,0],
          [0,a,0],
-         [0,0,-11.42]]) # -11.42 for model atm
+         [0,0,10.25]]) # -11.42 for model atm
     return L
 
 def getError_1dot(image):
     g = getGoalCoordinates(image)
-    #rospy.loginfo(g)
     c = getCoordinates(image)
-    goal_A = 467 # 65 for model, 467 for irl atm
+    goal_A = 190 # 65 for model, 190 for irl atm
     area = getComponentArea(image)
 
     # convert image coordinates to model coordinates
@@ -123,7 +138,8 @@ def getError_1dot(image):
     return e
 
 def getCameraVelocity_1dot(image):
-    theta = 0       # downwards angle between z axis of base and z_prime axis of camera
+    theta = 49       # downwards angle between z axis of base and z_prime axis of camera in degrees
+    r_theta = theta*m.pi/180
     
     L = getInteractionMatrix_1dot(image)
     e = getError_1dot(image)
@@ -149,6 +165,21 @@ def getCameraVelocity_1dot(image):
 
         # adaption for different coordinate system
         v.x = v_prime[0]
-        v.y = v_prime[1] * m.cos(theta) - v_prime[2] * m.sin(theta)
-        v.z = v_prime[1] * m.sin(theta) + v_prime[2] * m.cos(theta)
+        v.y = v_prime[1] * m.cos(r_theta) - v_prime[2] * m.sin(r_theta)
+        v.z = v_prime[1] * m.sin(r_theta) + v_prime[2] * m.cos(r_theta)
+
+        # speed cap to 1 or -1 depending on direction
+        if v.x > 1:
+            v.x = 1
+        if v.x < -1:
+            v.x = -1
+        if v.y > 1:
+            v.y = 1
+        if v.y < -1:
+            v.y = -1
+        if v.z > 1:
+            v.z = 1
+        if v.z < -1:
+            v.z = -1
+
     return v
